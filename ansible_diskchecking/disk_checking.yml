@@ -1,0 +1,46 @@
+---
+- name: Checking the Mount 
+  hosts: client
+  gather_facts: True
+  vars:
+    file_path: /var/www/html/diskchecking-report.html
+  tasks:
+    # - name: Ensure that free space on the tested volume is greater than 15%
+    #   assert:
+    #     that:
+    #       - mount.size_available > mount.size_total|float * 0.1
+    #     msg: Disk space has reached 85% threshold
+    #   vars:
+    #     mount: "{{ ansible_mounts | selectattr('mount','equalto',item.mount) | list | first }}"
+    #   with_items:
+    #     - "{{ ansible_mounts }}"
+    - name: Disk Checking one by one
+      shell: df -h / | tail -n 1 | awk {'print $5 '}
+      register: disk_check
+
+    - name: set Fact
+      set_fact: 
+        disk_check: "{{ disk_check.stdout }}"
+
+    - name: Disk Checking one by one
+      shell: df -h /boot | tail -n 1 | awk {'print $5 '}
+      register: boot_check
+
+    - name: set Fact
+      set_fact: 
+        boot_check: "{{ boot_check.stdout }}"
+
+    - name: Disk Checking one by one
+      shell: df -h /run | tail -n 1 | awk {'print $5 '}
+      register: run_check
+
+    - name: set Fact
+      set_fact: 
+        run_check: "{{ run_check.stdout }}"
+    
+    - name: create HTML report
+      template:
+        src: disk_checking.j2
+        dest: "{{ file_path }}"
+      delegate_to: localhost
+      run_once: true
