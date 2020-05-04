@@ -2,7 +2,7 @@
     - name: build Centos inventory report
       hosts: client
       vars:
-        file_path: /var/www/html/falcon-status-report.html
+        file_path: /var/www/html/sshd-service-checking-report.html
     
       tasks:
         - name: Getting the OS Information
@@ -36,7 +36,7 @@
     
         - name: create HTML report
           template:
-            src: falcon-sensor-checking.j2
+            src: sshd-service-checking.j2
             dest: "{{ file_path }}"
           delegate_to: localhost
           run_once: true
