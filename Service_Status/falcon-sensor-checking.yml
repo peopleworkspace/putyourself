@@ -1,0 +1,43 @@
+---
+    - name: build Centos inventory report
+      hosts: client
+      vars:
+        file_path: /var/www/html/falcon-status-report.html
+    
+      tasks:
+        - name: Getting the OS Information
+          command: 'cat /etc/redhat-release'
+          register: os_release
+       
+        
+        - name: set Fact
+          set_fact: 
+            service_check: "{{ os_release.stdout }}"
+    
+        - name: Getting the SSHD Status
+          shell: "/etc/init.d/sshd status"
+          register: sshd_status
+          when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '6'
+        
+        - name: set fact
+          set_fact:
+            status_fact: "{{ sshd_status.stdout }}" 
+          when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '6'
+    
+        - name: Getting the SSHD Status
+          shell: "systemctl status sshd | grep -i Active"
+          register: sshd_status
+          when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '7'
+    
+        - name: set fact
+          set_fact: 
+            status_fact: "{{ sshd_status.stdout }}"
+          when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '7'
+    
+        - name: create HTML report
+          template:
+            src: falcon-sensor-checking.j2
+            dest: "{{ file_path }}"
+          delegate_to: localhost
+          run_once: true
+    
